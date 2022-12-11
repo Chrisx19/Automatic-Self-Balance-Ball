@@ -73,7 +73,7 @@ int distance() {
 	  uint16_t adc;
 	  HAL_ADC_Start(&hadc1);
 	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-	  adc = (HAL_ADC_GetValue(&hadc1) / 77);
+	  adc = (HAL_ADC_GetValue(&hadc1) / 77); //50 <-> 30 of the rail customized ADC
 	  return adc;
 }
 
