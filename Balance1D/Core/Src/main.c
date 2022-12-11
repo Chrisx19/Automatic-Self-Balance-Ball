@@ -32,6 +32,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define kp 15
+#define ki 0.02
+#define kd 20
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -42,7 +45,7 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
-TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim11;
 
 UART_HandleTypeDef huart3;
 
@@ -55,16 +58,70 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_USART3_UART_Init(void);
-static void MX_TIM2_Init(void);
+static void MX_TIM11_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-long map(long x, long in_min, long in_max, long out_min, long out_max) {
+int map(int x, int in_min, int in_max, int out_min, int out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
+
+int distance() {
+	  uint16_t adc;
+	  HAL_ADC_Start(&hadc1);
+	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+	  adc = (HAL_ADC_GetValue(&hadc1) / 77);
+	  return adc;
+}
+
+float priError = 0;
+float toError = 0;
+
+char sendBuffer [64] = {0};
+void PID() {
+
+	//Gets the distance
+	  int dis = distance ();
+
+	//Includes the set point
+	  int setP = 24;
+	//Gets the error value
+	  float error = setP - dis;
+
+	//This code calculates the P term
+	  float Pvalue = error * kp;
+	//This code calculates the I term
+	  float Ivalue = toError * ki;
+	//This code calculates the D term
+	  float Dvalue = (error - priError) * kd;
+	//This code gets the PID value
+
+
+	  float PIDvalue = Pvalue + Ivalue + Dvalue;
+	  priError = error;
+	  toError += error;
+
+	  PIDvalue = map(PIDvalue, -26, 4, 9, 41);
+
+  	  if (PIDvalue < 9) {
+  		PIDvalue = 41;
+	  }
+	  if (PIDvalue > 41) {
+		  PIDvalue = 9;
+	  }
+
+  	 TIM11->CCR1 = PIDvalue;
+
+  	//Code below is basically to output PIDvalue on UART terminal
+	memset(sendBuffer, 0x00, 64);//default 0
+	sprintf((char*)sendBuffer, "%.2f\r\n", PIDvalue); //%.2f
+	HAL_UART_Transmit(&huart3, (uint8_t*) sendBuffer, strlen((char*)sendBuffer), HAL_MAX_DELAY);
+	HAL_Delay(100);
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -74,7 +131,7 @@ long map(long x, long in_min, long in_max, long out_min, long out_max) {
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint16_t raw;	//store 12bit reading ADC
+	//store 12bit reading ADC
 //	char msg[10];	//buffer for UART
   /* USER CODE END 1 */
 
@@ -98,11 +155,9 @@ int main(void)
   MX_GPIO_Init();
   MX_ADC1_Init();
   MX_USART3_UART_Init();
-  MX_TIM2_Init();
+  MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-
-  char msg [64] = {0};
+  HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -112,26 +167,11 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+//	  TIM11->CCR1 = 41;  //Right
+//	  TIM11->CCR1 = 24;	//mid
+//	  TIM11->CCR1 = 9; //Left
+	  PID();
 
-//	  htim2.Instance -> CCR1 = 21; //right
-//	  HAL_Delay(1000);
-//	  htim2.Instance -> CCR1 = 50; //middle
-//	  HAL_Delay(1000);
-//	  htim2.Instance -> CCR1 = 77;	//left
-
-
-	  HAL_ADC_Start(&hadc1);
-	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-//	  raw = HAL_ADC_GetValue(&hadc1) / 66.0483871 + 17;
-	  raw = (HAL_ADC_GetValue(&hadc1) / (4095/63)) + 17;
-
-	  htim2.Instance -> CCR1 = raw;
-
-	  memset(msg, 0x00, 64);//default 0
-	  sprintf(msg, "%hu\r\t\n", raw);
-	  HAL_UART_Transmit(&huart3, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
-
-	  HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }
@@ -230,46 +270,33 @@ static void MX_ADC1_Init(void)
 }
 
 /**
-  * @brief TIM2 Initialization Function
+  * @brief TIM11 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_TIM2_Init(void)
+static void MX_TIM11_Init(void)
 {
 
-  /* USER CODE BEGIN TIM2_Init 0 */
+  /* USER CODE BEGIN TIM11_Init 0 */
 
-  /* USER CODE END TIM2_Init 0 */
+  /* USER CODE END TIM11_Init 0 */
 
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
 
-  /* USER CODE BEGIN TIM2_Init 1 */
+  /* USER CODE BEGIN TIM11_Init 1 */
 
-  /* USER CODE END TIM2_Init 1 */
-  htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 506.6666667-1;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 631.5789474-1;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  /* USER CODE END TIM11_Init 1 */
+  htim11.Instance = TIM11;
+  htim11.Init.Prescaler = 958.33333333-1 ;
+  htim11.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim11.Init.Period = 333.9130435-1 ;
+  htim11.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim11.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim11) != HAL_OK)
   {
     Error_Handler();
   }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  if (HAL_TIM_PWM_Init(&htim11) != HAL_OK)
   {
     Error_Handler();
   }
@@ -277,14 +304,14 @@ static void MX_TIM2_Init(void)
   sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  if (HAL_TIM_PWM_ConfigChannel(&htim11, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN TIM2_Init 2 */
+  /* USER CODE BEGIN TIM11_Init 2 */
 
-  /* USER CODE END TIM2_Init 2 */
-  HAL_TIM_MspPostInit(&htim2);
+  /* USER CODE END TIM11_Init 2 */
+  HAL_TIM_MspPostInit(&htim11);
 
 }
 
@@ -334,6 +361,7 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -374,6 +402,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_5;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LD1_Pin LD3_Pin LD2_Pin */
