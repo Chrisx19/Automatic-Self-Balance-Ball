@@ -37,13 +37,13 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  16 .debug_macro  00028ea9  00000000  00000000  00031fe0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0000f069  00000000  00000000  0005ae89  2**0
+ 17 .debug_line   0000f071  00000000  00000000  0005ae89  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    00101c58  00000000  00000000  00069ef2  2**0
+ 18 .debug_str    00101c59  00000000  00000000  00069efa  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000050  00000000  00000000  0016bb4a  2**0
+ 19 .comment      00000050  00000000  00000000  0016bb53  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00004458  00000000  00000000  0016bb9c  2**2
+ 20 .debug_frame  00004458  00000000  00000000  0016bba4  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -499,13 +499,13 @@ void PID() {
  800066c:	af02      	add	r7, sp, #8
 
 	//Gets the distance
-	  int dis = distance ();
+	  int dis = distance();
  800066e:	f7ff ffdd 	bl	800062c <distance>
  8000672:	61b8      	str	r0, [r7, #24]
 
 	//Includes the set point
-	  int setP = 24;
- 8000674:	2318      	movs	r3, #24
+	  int setP = 23.5;
+ 8000674:	2317      	movs	r3, #23
  8000676:	617b      	str	r3, [r7, #20]
 	//Gets the error value
 	  float error = setP - dis;
@@ -519,184 +519,192 @@ void PID() {
 	//This code calculates the P term
 	  float Pvalue = error * kp;
  800068a:	edd7 7a04 	vldr	s15, [r7, #16]
- 800068e:	eeb2 7a0e 	vmov.f32	s14, #46	; 0x41700000  15.0
+ 800068e:	eeb0 7a08 	vmov.f32	s14, #8	; 0x40400000  3.0
  8000692:	ee67 7a87 	vmul.f32	s15, s15, s14
  8000696:	edc7 7a03 	vstr	s15, [r7, #12]
 	//This code calculates the I term
 	  float Ivalue = toError * ki;
- 800069a:	4b45      	ldr	r3, [pc, #276]	; (80007b0 <PID+0x148>)
+ 800069a:	4b41      	ldr	r3, [pc, #260]	; (80007a0 <PID+0x138>)
  800069c:	edd3 7a00 	vldr	s15, [r3]
- 80006a0:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 80006a4:	ed9f 6b40 	vldr	d6, [pc, #256]	; 80007a8 <PID+0x140>
- 80006a8:	ee27 7b06 	vmul.f64	d7, d7, d6
- 80006ac:	eef7 7bc7 	vcvt.f32.f64	s15, d7
- 80006b0:	edc7 7a02 	vstr	s15, [r7, #8]
+ 80006a0:	ed9f 7a40 	vldr	s14, [pc, #256]	; 80007a4 <PID+0x13c>
+ 80006a4:	ee67 7a87 	vmul.f32	s15, s15, s14
+ 80006a8:	edc7 7a02 	vstr	s15, [r7, #8]
 	//This code calculates the D term
 	  float Dvalue = (error - priError) * kd;
- 80006b4:	4b3f      	ldr	r3, [pc, #252]	; (80007b4 <PID+0x14c>)
- 80006b6:	edd3 7a00 	vldr	s15, [r3]
- 80006ba:	ed97 7a04 	vldr	s14, [r7, #16]
- 80006be:	ee77 7a67 	vsub.f32	s15, s14, s15
- 80006c2:	eeb3 7a04 	vmov.f32	s14, #52	; 0x41a00000  20.0
- 80006c6:	ee67 7a87 	vmul.f32	s15, s15, s14
- 80006ca:	edc7 7a01 	vstr	s15, [r7, #4]
+ 80006ac:	4b3e      	ldr	r3, [pc, #248]	; (80007a8 <PID+0x140>)
+ 80006ae:	edd3 7a00 	vldr	s15, [r3]
+ 80006b2:	ed97 7a04 	vldr	s14, [r7, #16]
+ 80006b6:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 80006ba:	ed9f 7a3a 	vldr	s14, [pc, #232]	; 80007a4 <PID+0x13c>
+ 80006be:	ee67 7a87 	vmul.f32	s15, s15, s14
+ 80006c2:	edc7 7a01 	vstr	s15, [r7, #4]
 	//This code gets the PID value
 
 
 	  float PIDvalue = Pvalue + Ivalue + Dvalue;
- 80006ce:	ed97 7a03 	vldr	s14, [r7, #12]
- 80006d2:	edd7 7a02 	vldr	s15, [r7, #8]
+ 80006c6:	ed97 7a03 	vldr	s14, [r7, #12]
+ 80006ca:	edd7 7a02 	vldr	s15, [r7, #8]
+ 80006ce:	ee77 7a27 	vadd.f32	s15, s14, s15
+ 80006d2:	ed97 7a01 	vldr	s14, [r7, #4]
  80006d6:	ee77 7a27 	vadd.f32	s15, s14, s15
- 80006da:	ed97 7a01 	vldr	s14, [r7, #4]
- 80006de:	ee77 7a27 	vadd.f32	s15, s14, s15
- 80006e2:	edc7 7a07 	vstr	s15, [r7, #28]
+ 80006da:	edc7 7a07 	vstr	s15, [r7, #28]
 	  priError = error;
- 80006e6:	4a33      	ldr	r2, [pc, #204]	; (80007b4 <PID+0x14c>)
- 80006e8:	693b      	ldr	r3, [r7, #16]
- 80006ea:	6013      	str	r3, [r2, #0]
+ 80006de:	4a32      	ldr	r2, [pc, #200]	; (80007a8 <PID+0x140>)
+ 80006e0:	693b      	ldr	r3, [r7, #16]
+ 80006e2:	6013      	str	r3, [r2, #0]
 	  toError += error;
- 80006ec:	4b30      	ldr	r3, [pc, #192]	; (80007b0 <PID+0x148>)
- 80006ee:	ed93 7a00 	vldr	s14, [r3]
- 80006f2:	edd7 7a04 	vldr	s15, [r7, #16]
- 80006f6:	ee77 7a27 	vadd.f32	s15, s14, s15
- 80006fa:	4b2d      	ldr	r3, [pc, #180]	; (80007b0 <PID+0x148>)
- 80006fc:	edc3 7a00 	vstr	s15, [r3]
+ 80006e4:	4b2e      	ldr	r3, [pc, #184]	; (80007a0 <PID+0x138>)
+ 80006e6:	ed93 7a00 	vldr	s14, [r3]
+ 80006ea:	edd7 7a04 	vldr	s15, [r7, #16]
+ 80006ee:	ee77 7a27 	vadd.f32	s15, s14, s15
+ 80006f2:	4b2b      	ldr	r3, [pc, #172]	; (80007a0 <PID+0x138>)
+ 80006f4:	edc3 7a00 	vstr	s15, [r3]
 
-	  PIDvalue = map(PIDvalue, -26, 4, 9, 41);
- 8000700:	edd7 7a07 	vldr	s15, [r7, #28]
- 8000704:	eefd 7ae7 	vcvt.s32.f32	s15, s15
- 8000708:	2329      	movs	r3, #41	; 0x29
- 800070a:	9300      	str	r3, [sp, #0]
- 800070c:	2309      	movs	r3, #9
- 800070e:	2204      	movs	r2, #4
- 8000710:	f06f 0119 	mvn.w	r1, #25
- 8000714:	ee17 0a90 	vmov	r0, s15
- 8000718:	f7ff ff6c 	bl	80005f4 <map>
- 800071c:	ee07 0a90 	vmov	s15, r0
- 8000720:	eef8 7ae7 	vcvt.f32.s32	s15, s15
- 8000724:	edc7 7a07 	vstr	s15, [r7, #28]
+	  PIDvalue = map(PIDvalue, -35, 35, 110, 50);
+ 80006f8:	edd7 7a07 	vldr	s15, [r7, #28]
+ 80006fc:	eefd 7ae7 	vcvt.s32.f32	s15, s15
+ 8000700:	2332      	movs	r3, #50	; 0x32
+ 8000702:	9300      	str	r3, [sp, #0]
+ 8000704:	236e      	movs	r3, #110	; 0x6e
+ 8000706:	2223      	movs	r2, #35	; 0x23
+ 8000708:	f06f 0122 	mvn.w	r1, #34	; 0x22
+ 800070c:	ee17 0a90 	vmov	r0, s15
+ 8000710:	f7ff ff70 	bl	80005f4 <map>
+ 8000714:	ee07 0a90 	vmov	s15, r0
+ 8000718:	eef8 7ae7 	vcvt.f32.s32	s15, s15
+ 800071c:	edc7 7a07 	vstr	s15, [r7, #28]
+//	  if (PIDvalue > 110) {
+//		  PIDvalue = 50;
+//	  }
+//
 
-  	  if (PIDvalue < 9) {
- 8000728:	edd7 7a07 	vldr	s15, [r7, #28]
- 800072c:	eeb2 7a02 	vmov.f32	s14, #34	; 0x41100000  9.0
- 8000730:	eef4 7ac7 	vcmpe.f32	s15, s14
- 8000734:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
- 8000738:	d501      	bpl.n	800073e <PID+0xd6>
-  		PIDvalue = 41;
- 800073a:	4b1f      	ldr	r3, [pc, #124]	; (80007b8 <PID+0x150>)
- 800073c:	61fb      	str	r3, [r7, #28]
+  	  if (PIDvalue < 50) {
+ 8000720:	edd7 7a07 	vldr	s15, [r7, #28]
+ 8000724:	ed9f 7a21 	vldr	s14, [pc, #132]	; 80007ac <PID+0x144>
+ 8000728:	eef4 7ac7 	vcmpe.f32	s15, s14
+ 800072c:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
+ 8000730:	d501      	bpl.n	8000736 <PID+0xce>
+  		PIDvalue = 50;
+ 8000732:	4b1f      	ldr	r3, [pc, #124]	; (80007b0 <PID+0x148>)
+ 8000734:	61fb      	str	r3, [r7, #28]
 	  }
-	  if (PIDvalue > 41) {
- 800073e:	edd7 7a07 	vldr	s15, [r7, #28]
- 8000742:	ed9f 7a1e 	vldr	s14, [pc, #120]	; 80007bc <PID+0x154>
- 8000746:	eef4 7ac7 	vcmpe.f32	s15, s14
- 800074a:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
- 800074e:	dd01      	ble.n	8000754 <PID+0xec>
-		  PIDvalue = 9;
- 8000750:	4b1b      	ldr	r3, [pc, #108]	; (80007c0 <PID+0x158>)
- 8000752:	61fb      	str	r3, [r7, #28]
+	  if (PIDvalue > 110) {
+ 8000736:	edd7 7a07 	vldr	s15, [r7, #28]
+ 800073a:	ed9f 7a1e 	vldr	s14, [pc, #120]	; 80007b4 <PID+0x14c>
+ 800073e:	eef4 7ac7 	vcmpe.f32	s15, s14
+ 8000742:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
+ 8000746:	dd01      	ble.n	800074c <PID+0xe4>
+		  PIDvalue = 110;
+ 8000748:	4b1b      	ldr	r3, [pc, #108]	; (80007b8 <PID+0x150>)
+ 800074a:	61fb      	str	r3, [r7, #28]
 	  }
 
   	 TIM11->CCR1 = PIDvalue;
- 8000754:	4b1b      	ldr	r3, [pc, #108]	; (80007c4 <PID+0x15c>)
- 8000756:	edd7 7a07 	vldr	s15, [r7, #28]
- 800075a:	eefc 7ae7 	vcvt.u32.f32	s15, s15
- 800075e:	ee17 2a90 	vmov	r2, s15
- 8000762:	635a      	str	r2, [r3, #52]	; 0x34
+ 800074c:	4b1b      	ldr	r3, [pc, #108]	; (80007bc <PID+0x154>)
+ 800074e:	edd7 7a07 	vldr	s15, [r7, #28]
+ 8000752:	eefc 7ae7 	vcvt.u32.f32	s15, s15
+ 8000756:	ee17 2a90 	vmov	r2, s15
+ 800075a:	635a      	str	r2, [r3, #52]	; 0x34
 
+  	//Code below is basically to output PIDvalue on UART terminal
 	memset(sendBuffer, 0x00, 64);//default 0
- 8000764:	2240      	movs	r2, #64	; 0x40
- 8000766:	2100      	movs	r1, #0
- 8000768:	4817      	ldr	r0, [pc, #92]	; (80007c8 <PID+0x160>)
- 800076a:	f004 f813 	bl	8004794 <memset>
+ 800075c:	2240      	movs	r2, #64	; 0x40
+ 800075e:	2100      	movs	r1, #0
+ 8000760:	4817      	ldr	r0, [pc, #92]	; (80007c0 <PID+0x158>)
+ 8000762:	f004 f817 	bl	8004794 <memset>
 	sprintf((char*)sendBuffer, "%.2f\r\n", PIDvalue); //%.2f
- 800076e:	edd7 7a07 	vldr	s15, [r7, #28]
- 8000772:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8000776:	ec53 2b17 	vmov	r2, r3, d7
- 800077a:	4914      	ldr	r1, [pc, #80]	; (80007cc <PID+0x164>)
- 800077c:	4812      	ldr	r0, [pc, #72]	; (80007c8 <PID+0x160>)
- 800077e:	f004 fc55 	bl	800502c <siprintf>
-	HAL_UART_Transmit(&huart3, (uint8_t*) sendBuffer, strlen((char*)sendBuffer), HAL_MAX_DELAY);
- 8000782:	4811      	ldr	r0, [pc, #68]	; (80007c8 <PID+0x160>)
- 8000784:	f7ff fd5c 	bl	8000240 <strlen>
- 8000788:	4603      	mov	r3, r0
- 800078a:	b29a      	uxth	r2, r3
- 800078c:	f04f 33ff 	mov.w	r3, #4294967295
- 8000790:	490d      	ldr	r1, [pc, #52]	; (80007c8 <PID+0x160>)
- 8000792:	480f      	ldr	r0, [pc, #60]	; (80007d0 <PID+0x168>)
- 8000794:	f003 fb37 	bl	8003e06 <HAL_UART_Transmit>
-	HAL_Delay(100);
- 8000798:	2064      	movs	r0, #100	; 0x64
- 800079a:	f000 fd39 	bl	8001210 <HAL_Delay>
-}
- 800079e:	bf00      	nop
- 80007a0:	3720      	adds	r7, #32
- 80007a2:	46bd      	mov	sp, r7
- 80007a4:	bd80      	pop	{r7, pc}
- 80007a6:	bf00      	nop
- 80007a8:	47ae147b 	.word	0x47ae147b
- 80007ac:	3f947ae1 	.word	0x3f947ae1
- 80007b0:	20000318 	.word	0x20000318
- 80007b4:	20000314 	.word	0x20000314
- 80007b8:	42240000 	.word	0x42240000
- 80007bc:	42240000 	.word	0x42240000
- 80007c0:	41100000 	.word	0x41100000
- 80007c4:	40014800 	.word	0x40014800
- 80007c8:	2000031c 	.word	0x2000031c
- 80007cc:	08007438 	.word	0x08007438
- 80007d0:	2000028c 	.word	0x2000028c
+ 8000766:	edd7 7a07 	vldr	s15, [r7, #28]
+ 800076a:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 800076e:	ec53 2b17 	vmov	r2, r3, d7
+ 8000772:	4914      	ldr	r1, [pc, #80]	; (80007c4 <PID+0x15c>)
+ 8000774:	4812      	ldr	r0, [pc, #72]	; (80007c0 <PID+0x158>)
+ 8000776:	f004 fc59 	bl	800502c <siprintf>
 
-080007d4 <main>:
+	HAL_UART_Transmit(&huart3, (uint8_t*) sendBuffer, strlen((char*)sendBuffer), HAL_MAX_DELAY);
+ 800077a:	4811      	ldr	r0, [pc, #68]	; (80007c0 <PID+0x158>)
+ 800077c:	f7ff fd60 	bl	8000240 <strlen>
+ 8000780:	4603      	mov	r3, r0
+ 8000782:	b29a      	uxth	r2, r3
+ 8000784:	f04f 33ff 	mov.w	r3, #4294967295
+ 8000788:	490d      	ldr	r1, [pc, #52]	; (80007c0 <PID+0x158>)
+ 800078a:	480f      	ldr	r0, [pc, #60]	; (80007c8 <PID+0x160>)
+ 800078c:	f003 fb3b 	bl	8003e06 <HAL_UART_Transmit>
+	HAL_Delay(10);
+ 8000790:	200a      	movs	r0, #10
+ 8000792:	f000 fd3d 	bl	8001210 <HAL_Delay>
+}
+ 8000796:	bf00      	nop
+ 8000798:	3720      	adds	r7, #32
+ 800079a:	46bd      	mov	sp, r7
+ 800079c:	bd80      	pop	{r7, pc}
+ 800079e:	bf00      	nop
+ 80007a0:	20000318 	.word	0x20000318
+ 80007a4:	00000000 	.word	0x00000000
+ 80007a8:	20000314 	.word	0x20000314
+ 80007ac:	42480000 	.word	0x42480000
+ 80007b0:	42480000 	.word	0x42480000
+ 80007b4:	42dc0000 	.word	0x42dc0000
+ 80007b8:	42dc0000 	.word	0x42dc0000
+ 80007bc:	40014800 	.word	0x40014800
+ 80007c0:	2000031c 	.word	0x2000031c
+ 80007c4:	08007438 	.word	0x08007438
+ 80007c8:	2000028c 	.word	0x2000028c
+
+080007cc <main>:
 /**
   * @brief  The application entry point.
   * @retval int
   */
 int main(void)
 {
- 80007d4:	b580      	push	{r7, lr}
- 80007d6:	af00      	add	r7, sp, #0
+ 80007cc:	b580      	push	{r7, lr}
+ 80007ce:	af00      	add	r7, sp, #0
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
- 80007d8:	f000 fcbd 	bl	8001156 <HAL_Init>
+ 80007d0:	f000 fcc1 	bl	8001156 <HAL_Init>
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
- 80007dc:	f000 f812 	bl	8000804 <SystemClock_Config>
+ 80007d4:	f000 f816 	bl	8000804 <SystemClock_Config>
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
- 80007e0:	f000 f93c 	bl	8000a5c <MX_GPIO_Init>
+ 80007d8:	f000 f940 	bl	8000a5c <MX_GPIO_Init>
   MX_ADC1_Init();
- 80007e4:	f000 f86a 	bl	80008bc <MX_ADC1_Init>
+ 80007dc:	f000 f86e 	bl	80008bc <MX_ADC1_Init>
   MX_USART3_UART_Init();
- 80007e8:	f000 f908 	bl	80009fc <MX_USART3_UART_Init>
+ 80007e0:	f000 f90c 	bl	80009fc <MX_USART3_UART_Init>
   MX_TIM11_Init();
- 80007ec:	f000 f8b8 	bl	8000960 <MX_TIM11_Init>
+ 80007e4:	f000 f8bc 	bl	8000960 <MX_TIM11_Init>
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
- 80007f0:	2100      	movs	r1, #0
- 80007f2:	4803      	ldr	r0, [pc, #12]	; (8000800 <main+0x2c>)
- 80007f4:	f002 fd88 	bl	8003308 <HAL_TIM_PWM_Start>
+ 80007e8:	2100      	movs	r1, #0
+ 80007ea:	4804      	ldr	r0, [pc, #16]	; (80007fc <main+0x30>)
+ 80007ec:	f002 fd8c 	bl	8003308 <HAL_TIM_PWM_Start>
+  TIM11->CCR1 = 75;
+ 80007f0:	4b03      	ldr	r3, [pc, #12]	; (8000800 <main+0x34>)
+ 80007f2:	224b      	movs	r2, #75	; 0x4b
+ 80007f4:	635a      	str	r2, [r3, #52]	; 0x34
 
     /* USER CODE BEGIN 3 */
 //	  TIM11->CCR1 = 41;  //Right
 //	  TIM11->CCR1 = 24;	//mid
-//	  TIM11->CCR1 = 8.5; //Left
+//	  TIM11->CCR1 = 9; //Left
 	  PID();
- 80007f8:	f7ff ff36 	bl	8000668 <PID>
- 80007fc:	e7fc      	b.n	80007f8 <main+0x24>
- 80007fe:	bf00      	nop
- 8000800:	20000240 	.word	0x20000240
+ 80007f6:	f7ff ff37 	bl	8000668 <PID>
+ 80007fa:	e7fc      	b.n	80007f6 <main+0x2a>
+ 80007fc:	20000240 	.word	0x20000240
+ 8000800:	40014800 	.word	0x40014800
 
 08000804 <SystemClock_Config>:
 /**
@@ -971,17 +979,17 @@ static void MX_TIM11_Init(void)
  8000978:	4b1e      	ldr	r3, [pc, #120]	; (80009f4 <MX_TIM11_Init+0x94>)
  800097a:	4a1f      	ldr	r2, [pc, #124]	; (80009f8 <MX_TIM11_Init+0x98>)
  800097c:	601a      	str	r2, [r3, #0]
-  htim11.Init.Prescaler = 958.33333333-1 ;
+  htim11.Init.Prescaler = 320-1 ;
  800097e:	4b1d      	ldr	r3, [pc, #116]	; (80009f4 <MX_TIM11_Init+0x94>)
- 8000980:	f240 32bd 	movw	r2, #957	; 0x3bd
+ 8000980:	f240 123f 	movw	r2, #319	; 0x13f
  8000984:	605a      	str	r2, [r3, #4]
   htim11.Init.CounterMode = TIM_COUNTERMODE_UP;
  8000986:	4b1b      	ldr	r3, [pc, #108]	; (80009f4 <MX_TIM11_Init+0x94>)
  8000988:	2200      	movs	r2, #0
  800098a:	609a      	str	r2, [r3, #8]
-  htim11.Init.Period = 333.9130435-1 ;
+  htim11.Init.Period = 1000-1 ;
  800098c:	4b19      	ldr	r3, [pc, #100]	; (80009f4 <MX_TIM11_Init+0x94>)
- 800098e:	f44f 72a6 	mov.w	r2, #332	; 0x14c
+ 800098e:	f240 32e7 	movw	r2, #999	; 0x3e7
  8000992:	60da      	str	r2, [r3, #12]
   htim11.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
  8000994:	4b17      	ldr	r3, [pc, #92]	; (80009f4 <MX_TIM11_Init+0x94>)
@@ -1069,9 +1077,9 @@ static void MX_USART3_UART_Init(void)
  8000a00:	4b14      	ldr	r3, [pc, #80]	; (8000a54 <MX_USART3_UART_Init+0x58>)
  8000a02:	4a15      	ldr	r2, [pc, #84]	; (8000a58 <MX_USART3_UART_Init+0x5c>)
  8000a04:	601a      	str	r2, [r3, #0]
-  huart3.Init.BaudRate = 115200;
+  huart3.Init.BaudRate = 9600;
  8000a06:	4b13      	ldr	r3, [pc, #76]	; (8000a54 <MX_USART3_UART_Init+0x58>)
- 8000a08:	f44f 32e1 	mov.w	r2, #115200	; 0x1c200
+ 8000a08:	f44f 5216 	mov.w	r2, #9600	; 0x2580
  8000a0c:	605a      	str	r2, [r3, #4]
   huart3.Init.WordLength = UART_WORDLENGTH_8B;
  8000a0e:	4b11      	ldr	r3, [pc, #68]	; (8000a54 <MX_USART3_UART_Init+0x58>)
@@ -2450,7 +2458,7 @@ LoopFillZerobss:
  8001132:	f003 fb0b 	bl	800474c <__libc_init_array>
 /* Call the application's entry point.*/
   bl  main
- 8001136:	f7ff fb4d 	bl	80007d4 <main>
+ 8001136:	f7ff fb49 	bl	80007cc <main>
   bx  lr    
  800113a:	4770      	bx	lr
   ldr   sp, =_estack      /* set stack pointer */

@@ -32,9 +32,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define kp 15
-#define ki 0.02
-#define kd 20
+#define kp 3.0
+#define ki 0.0
+#define kd 0.0
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -84,10 +84,10 @@ char sendBuffer [64] = {0};
 void PID() {
 
 	//Gets the distance
-	  int dis = distance ();
+	  int dis = distance();
 
 	//Includes the set point
-	  int setP = 24;
+	  int setP = 23.5;
 	//Gets the error value
 	  float error = setP - dis;
 
@@ -104,13 +104,21 @@ void PID() {
 	  priError = error;
 	  toError += error;
 
-	  PIDvalue = map(PIDvalue, -26, 4, 9, 41);
+	  PIDvalue = map(PIDvalue, -35, 35, 110, 50);
 
-  	  if (PIDvalue < 9) {
-  		PIDvalue = 41;
+//  	  if (PIDvalue < 50) {
+//  		PIDvalue = 110;
+//	  }
+//	  if (PIDvalue > 110) {
+//		  PIDvalue = 50;
+//	  }
+//
+
+  	  if (PIDvalue < 50) {
+  		PIDvalue = 50;
 	  }
-	  if (PIDvalue > 41) {
-		  PIDvalue = 9;
+	  if (PIDvalue > 110) {
+		  PIDvalue = 110;
 	  }
 
   	 TIM11->CCR1 = PIDvalue;
@@ -118,8 +126,9 @@ void PID() {
   	//Code below is basically to output PIDvalue on UART terminal
 	memset(sendBuffer, 0x00, 64);//default 0
 	sprintf((char*)sendBuffer, "%.2f\r\n", PIDvalue); //%.2f
+
 	HAL_UART_Transmit(&huart3, (uint8_t*) sendBuffer, strlen((char*)sendBuffer), HAL_MAX_DELAY);
-	HAL_Delay(100);
+	HAL_Delay(10);
 }
 
 /* USER CODE END 0 */
@@ -158,6 +167,7 @@ int main(void)
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
+  TIM11->CCR1 = 75;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -167,9 +177,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//	  TIM11->CCR1 = 41;  //Right
-//	  TIM11->CCR1 = 24;	//mid
-//	  TIM11->CCR1 = 9; //Left
+//	  TIM11->CCR1 = 25;  //Right 0 degree
+//	  TIM11->CCR1 = 75;	//mid 90 degrees
+//	  TIM11->CCR1 = 125; //Left 180 degrees
 	  PID();
 
   }
@@ -287,9 +297,9 @@ static void MX_TIM11_Init(void)
 
   /* USER CODE END TIM11_Init 1 */
   htim11.Instance = TIM11;
-  htim11.Init.Prescaler = 958.33333333-1 ;
+  htim11.Init.Prescaler = 320-1 ;
   htim11.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim11.Init.Period = 333.9130435-1 ;
+  htim11.Init.Period = 1000-1 ;
   htim11.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim11.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim11) != HAL_OK)
@@ -331,7 +341,7 @@ static void MX_USART3_UART_Init(void)
 
   /* USER CODE END USART3_Init 1 */
   huart3.Instance = USART3;
-  huart3.Init.BaudRate = 115200;
+  huart3.Init.BaudRate = 9600;
   huart3.Init.WordLength = UART_WORDLENGTH_8B;
   huart3.Init.StopBits = UART_STOPBITS_1;
   huart3.Init.Parity = UART_PARITY_NONE;
