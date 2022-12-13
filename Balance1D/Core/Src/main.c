@@ -83,13 +83,13 @@ double pid_controller(double setpoint, double feedback, double kp, double ki, do
 
   double error = setpoint - feedback;			// Calculate the error
 
-  double p_term = kp * error;					// Calculate the proportional term
-  static double i_term = 0;						// Calculate the integral term
+  double p_term = kp * error;				// Calculate the proportional term
+  static double i_term = 0;				// Calculate the integral term
 		 i_term += ki * error;
-  double d_term = kd * (error - last_error);	// Calculate the derivative term
+  double d_term = kd * (error - last_error);		// Calculate the derivative term
   last_error = error;
 
-  return p_term + i_term + d_term;				// Return the output of the PID controller
+  return p_term + i_term + d_term;			// Return the output of the PID controller
 }
 
 /* USER CODE END 0 */
@@ -138,27 +138,27 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  double dist = distance();
-	  if (dist == 12 || dist ==  11)						//filter out 12 and 11 since its noise from Sharp sensor
+	  if (dist == 12 || dist ==  11)					//filter out 12 and 11 since its noise from Sharp sensor
 	  {
 		  dist = 9;
 	  }
-//									  S	  F	     P       I     D
+//					   S  F      P      I     D
 	  double pid_val = pid_controller(9, dist, 1.998, 0.0067, 50);
 	  pid_val = map(pid_val, -15, 15, 91, 61);				//value range is +-15, zero becoming the 0 error
 
 	  if (pid_val < 61)
 	  {
-		  pid_val = 61;										//Limit tilt --> val = 61, rail tilt to left(from our POV)
+		  pid_val = 61;							//Limit tilt --> val = 61, rail tilt to left(from our POV)
 	  }
 	  if (pid_val > 91)
 	  {
-		  pid_val = 91;										//Limit tilt --> val = 91, rail tilt to right(from our POV)
+		  pid_val = 91;							//Limit tilt --> val = 91, rail tilt to right(from our POV)
 	  }
 
-	  TIM11->CCR1 = pid_val;								//middle rail --> val = 76
+	  TIM11->CCR1 = pid_val;						//middle rail --> val = 76
 
-	  memset(sendBuffer, 0x00, 64);							//default serial 0
-	  sprintf((char*)sendBuffer, "%.2lf\r\n", dist); 		//PID_val being sent to serial for debug if something happens
+	  memset(sendBuffer, 0x00, 64);						//default serial 0
+	  sprintf((char*)sendBuffer, "%.2lf\r\n", dist); 			//PID_val being sent to serial for debug if something happens
 
 	  HAL_UART_Transmit(&huart3, (uint8_t*) sendBuffer, strlen((char*)sendBuffer), HAL_MAX_DELAY);
 	  HAL_Delay(70);										//filters the shaking of the rail
