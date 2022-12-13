@@ -156,7 +156,7 @@ int main(void)
 	  }
 
 	  TIM11->CCR1 = pid_val;						//middle rail --> val = 76
-
+  }
 	  memset(sendBuffer, 0x00, 64);						//default serial 0
 	  sprintf((char*)sendBuffer, "%.2lf\r\n", dist); 			//PID_val being sent to serial for debug if something happens
 
