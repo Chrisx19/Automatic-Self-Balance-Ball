@@ -32,9 +32,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define kp 3.0
-#define ki 0.0
-#define kd 0.0
+//#define kp 3.0
+//#define ki 0.0
+//#define kd 0.0
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -73,62 +73,23 @@ int distance() {
 	  uint16_t adc;
 	  HAL_ADC_Start(&hadc1);
 	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-	  adc = (HAL_ADC_GetValue(&hadc1) / 77); //50 <-> 30 of the rail customized ADC
+	  adc = (HAL_ADC_GetValue(&hadc1) / 193.561976);	//config ADC to max num 20
+//	  adc = HAL_ADC_GetValue(&hadc1);
 	  return adc;
 }
 
-float priError = 0;
-float toError = 0;
+double last_error;
+double pid_controller(double setpoint, double feedback, double kp, double ki, double kd) {
 
-char sendBuffer [64] = {0};
-void PID() {
+  double error = setpoint - feedback;			// Calculate the error
 
-	//Gets the distance
-	  int dis = distance();
+  double p_term = kp * error;					// Calculate the proportional term
+  static double i_term = 0;						// Calculate the integral term
+		 i_term += ki * error;
+  double d_term = kd * (error - last_error);	// Calculate the derivative term
+  last_error = error;
 
-	//Includes the set point
-	  int setP = 23.5;
-	//Gets the error value
-	  float error = setP - dis;
-
-	//This code calculates the P term
-	  float Pvalue = error * kp;
-	//This code calculates the I term
-	  float Ivalue = toError * ki;
-	//This code calculates the D term
-	  float Dvalue = (error - priError) * kd;
-	//This code gets the PID value
-
-
-	  float PIDvalue = Pvalue + Ivalue + Dvalue;
-	  priError = error;
-	  toError += error;
-
-	  PIDvalue = map(PIDvalue, -35, 35, 110, 50);
-
-//  	  if (PIDvalue < 50) {
-//  		PIDvalue = 110;
-//	  }
-//	  if (PIDvalue > 110) {
-//		  PIDvalue = 50;
-//	  }
-//
-
-  	  if (PIDvalue < 50) {
-  		PIDvalue = 50;
-	  }
-	  if (PIDvalue > 110) {
-		  PIDvalue = 110;
-	  }
-
-  	 TIM11->CCR1 = PIDvalue;
-
-  	//Code below is basically to output PIDvalue on UART terminal
-	memset(sendBuffer, 0x00, 64);//default 0
-	sprintf((char*)sendBuffer, "%.2f\r\n", PIDvalue); //%.2f
-
-	HAL_UART_Transmit(&huart3, (uint8_t*) sendBuffer, strlen((char*)sendBuffer), HAL_MAX_DELAY);
-	HAL_Delay(10);
+  return p_term + i_term + d_term;				// Return the output of the PID controller
 }
 
 /* USER CODE END 0 */
@@ -140,8 +101,7 @@ void PID() {
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	//store 12bit reading ADC
-//	char msg[10];	//buffer for UART
+	char sendBuffer [64] = {0};	//buffer for UART
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -167,7 +127,7 @@ int main(void)
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
-  TIM11->CCR1 = 75;
+  TIM11->CCR1 = 76;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -177,11 +137,31 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//	  TIM11->CCR1 = 25;  //Right 0 degree
-//	  TIM11->CCR1 = 75;	//mid 90 degrees
-//	  TIM11->CCR1 = 125; //Left 180 degrees
-	  PID();
+	  double dist = distance();
+	  if (dist == 12 || dist ==  11)						//filter out 12 and 11 since its noise from Sharp sensor
+	  {
+		  dist = 9;
+	  }
+//									  S	  F	     P       I     D
+	  double pid_val = pid_controller(9, dist, 1.998, 0.0067, 50);
+	  pid_val = map(pid_val, -15, 15, 91, 61);				//value range is +-15, zero becoming the 0 error
 
+	  if (pid_val < 61)
+	  {
+		  pid_val = 61;										//Limit tilt --> val = 61, rail tilt to left(from our POV)
+	  }
+	  if (pid_val > 91)
+	  {
+		  pid_val = 91;										//Limit tilt --> val = 91, rail tilt to right(from our POV)
+	  }
+
+	  TIM11->CCR1 = pid_val;								//middle rail --> val = 76
+
+	  memset(sendBuffer, 0x00, 64);							//default serial 0
+	  sprintf((char*)sendBuffer, "%.2lf\r\n", dist); 		//PID_val being sent to serial for debug if something happens
+
+	  HAL_UART_Transmit(&huart3, (uint8_t*) sendBuffer, strlen((char*)sendBuffer), HAL_MAX_DELAY);
+	  HAL_Delay(70);										//filters the shaking of the rail
   }
   /* USER CODE END 3 */
 }
