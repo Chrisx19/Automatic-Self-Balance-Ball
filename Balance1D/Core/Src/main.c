@@ -85,7 +85,7 @@ double pid_controller(double setpoint, double feedback, double kp, double ki, do
 
   double p_term = kp * error;				// Calculate the proportional term
   static double i_term = 0;				// Calculate the integral term
-		 i_term += ki * error;
+	 i_term += ki * error;
   double d_term = kd * (error - last_error);		// Calculate the derivative term
   last_error = error;
 
