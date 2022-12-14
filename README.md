@@ -5,7 +5,7 @@
                                                                 
 **Main Processor:** STM32 - Nucleo F767ZI
 
-Code: https://github.com/Chrisx19/Automatic-Self-Balance-Ball/blob/main/Balance1D/Core/Src/main.c
+**Code:** https://github.com/Chrisx19/Automatic-Self-Balance-Ball/blob/main/Balance1D/Core/Src/main.c
 
 ## **System Block**
 
